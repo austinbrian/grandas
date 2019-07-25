@@ -2,6 +2,8 @@
 
 import pytest
 import pandas as pd
+import json
+
 from grandas import graph_engine
 from grandas import GraphFrame
 from grandas import Node, Relationship, Subgraph
@@ -37,8 +39,10 @@ def test_graph_frame(generate_nodes, generate_relationships):
 
 
 def test_node_creation(generate_nodes):
-    print(generate_nodes)
     nodes = [Node(**x) for x in generate_nodes]
-    print(nodes[0]._attrs)
     assert nodes[0]["label"] == "MAN"
     assert nodes[0].to_json() == '{"label": "MAN", "name": "Adam", "id": "101"}'
+    print(nodes[0])
+    node_to_series = pd.Series(data=nodes[0]._attrs)
+    print(node_to_series)
+    assert node_to_series["label"] == "MAN"
