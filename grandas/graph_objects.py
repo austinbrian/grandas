@@ -15,6 +15,9 @@ class Node:
     def to_json(self) -> str:
         return json.dumps(self._attrs)
 
+    def __repr__(self):
+        return f"(Node: {self._attrs})"
+
     def __setitem__(self, item: str, val):
         self._attrs[item] = val
 
@@ -23,7 +26,8 @@ class Node:
             return self.id == other.id
 
     def keys(self):
-        yield from iter(self._attrs.keys())
+        return list(self._attrs.keys())
+        # yield from iter(self._attrs.keys())
 
     def values(self):
         yield from iter(self._attrs.values())
