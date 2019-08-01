@@ -38,20 +38,48 @@ class GraphFrame:
         pass
 
 
-class Nodes(DataFrame):
+class NodeFrame(DataFrame):
     """Extends a pandas DataFrame to initialize for Node objects in grandas"""
 
-    def __init__(self, nodes: list):
-        super(DataFrame, self).__init__()
+    @property
+    def _constructor(self):
+        return NodeFrame
 
-        all_columns = list(set([n.keys() for n in nodes]))
+    _metadata = ["nodes"]
+
+    def __init__(self, nodes: list, index=None, columns=None, dtype=None, copy=True):
+        super(NodeFrame, self).__init__(
+            data=[dict(n) for n in nodes],
+            index=index,
+            columns=columns,
+            dtype=dtype,
+            copy=copy,
+        )
+
+        self.nodes = nodes
 
 
-class Relationships(DataFrame):
+class RelationshipFrame(DataFrame):
     """Extends a pandas DataFrame to initialize for Relationship objects in grandas"""
 
-    def __init__(self, relationships: list):
-        super(DataFrame, self).__init__()
+    @property
+    def _constructor(self):
+        return RelationshipFrame
+
+    _metadata = ["relationships"]
+
+    def __init__(
+        self, relationships: list, index=None, columns=None, dtype=None, copy=True
+    ):
+        super(RelationshipFrame, self).__init__(
+            data=[dict(n) for n in relationships],
+            index=index,
+            columns=columns,
+            dtype=dtype,
+            copy=copy,
+        )
+
+        self.relationships = relationships
 
     def expand(self):
         """
