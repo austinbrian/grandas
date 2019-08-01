@@ -8,6 +8,8 @@ class Node:
 
     def __init__(self, **kwargs):
         self._attrs = dict(**kwargs)
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
     def __getitem__(self, item: str):
         return self._attrs[item]
@@ -25,14 +27,25 @@ class Node:
         if isinstance(other, Node):
             return self.id == other.id
 
-    def keys(self):
-        return list(self._attrs.keys())
-        # yield from iter(self._attrs.keys())
+    def _keys(self):
+        yield from iter(self._attrs.keys())
 
-    def values(self):
+    def keys(self):
+        return list(self._keys())
+
+    def _values(self):
         yield from iter(self._attrs.values())
 
+    def values(self):
+        return list(self._values())
+
     def items(self):
+        yield from iter(self._attrs.items())
+
+    def to_dict(self):
+        return self._attrs
+
+    def __iter__(self):
         yield from iter(self._attrs.items())
 
 
