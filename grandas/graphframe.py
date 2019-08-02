@@ -9,7 +9,16 @@ class GraphFrame:
 
     a = "Hello test goodbye"
 
+    @property
+    def _constructor(self):
+        return GraphFrame
+
+    @property
+    def _constructor_sliced(self):
+        return GraphFrame
+
     def __init__(self, *args, **kwargs):
+
         if "nodes" in kwargs:
             self.nodes = self.make_nodes(nodes=kwargs["nodes"])  # Pandas DataFrame
         self.rels = self.make_relationships()
@@ -23,7 +32,7 @@ class GraphFrame:
     def make_nodes(self, nodes):
         # Make this from the Nodes class below
 
-        return Series(nodes)
+        return NodeFrame(nodes=nodes)
 
     def make_relationships(self):
         pass
@@ -35,6 +44,8 @@ class GraphFrame:
         # NOTE: This should display two distinct dataframes, so should have some
         # edited settings in jupyter notebook:
         # https://stackoverflow.com/questions/38783027/jupyter-notebook-display-two-pandas-tables-side-by-side
+
+        # seems like it can be edited to just return display(both, dataframes)
         pass
 
     def resolve(self):
@@ -49,6 +60,10 @@ class NodeFrame(DataFrame):
     def _constructor(self):
         return NodeFrame
 
+    # @property
+    # def _constructor_sliced(self):
+    #     return NodeFrame
+
     _metadata = ["nodes"]
 
     def __init__(self, nodes: list, index=None, columns=None, dtype=None, copy=True):
@@ -59,6 +74,15 @@ class NodeFrame(DataFrame):
 
         self.nodes = nodes
 
+    def resolve(self):
+        # Broken by
+        # TypeError: 'BlockManager' object is not iterable
+        df_copy = self.copy()
+        hash_df = pd.DataFrame(df_copy.nodes(), columns=["nodes"])
+        hash_df["hash"] = hash_df.nodes.apply(hash)
+        deduped_table = hash_df.drop_duplicates("hash")
+        return deduped_table
+
 
 class RelationshipFrame(DataFrame):
     """Extends a pandas DataFrame to initialize for Relationship objects in grandas"""
@@ -66,6 +90,10 @@ class RelationshipFrame(DataFrame):
     @property
     def _constructor(self):
         return RelationshipFrame
+
+    # @property
+    # def _constructor_sliced(self):
+    #     return RelationshipFrame
 
     _metadata = ["relationships"]
 

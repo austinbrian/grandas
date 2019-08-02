@@ -26,7 +26,7 @@ def generate_nodes():
 @pytest.fixture
 def generate_relationships():
     relationships = [
-        dict(zip(("source", "target", "label", "day"), ("101", "102", "gave_rib", "8")))
+        dict(zip(("start", "end", "label", "day"), ("101", "102", "gave_rib", "8")))
     ]
     return relationships
 
@@ -35,7 +35,7 @@ def test_graph_frame(generate_nodes, generate_relationships):
     nodes, relationships = generate_nodes, generate_relationships
     gf = GraphFrame(nodes=nodes)
     assert gf.a == "Hello test goodbye"
-    assert type(gf.nodes) == pd.Series
+    assert type(gf.nodes) == NodeFrame
 
 
 def test_node_creation(generate_nodes):
@@ -55,3 +55,10 @@ def test_nodes(generate_nodes):
         assert len(n.keys()) == 4
     ndf = NodeFrame(nodes=nodes)
     assert ndf.shape == (2, 4)
+
+
+def test_relationships(generate_relationships):
+    rels = generate_relationships
+    relationship_objects = [Relationship(**r) for r in rels]
+    for e, r in enumerate(relationship_objects):
+        assert dict(r) == rels[e]
