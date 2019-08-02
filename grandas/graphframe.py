@@ -37,6 +37,10 @@ class GraphFrame:
         # https://stackoverflow.com/questions/38783027/jupyter-notebook-display-two-pandas-tables-side-by-side
         pass
 
+    def resolve(self):
+        # start by comparing hashes across the nodeframe
+        pass
+
 
 class NodeFrame(DataFrame):
     """Extends a pandas DataFrame to initialize for Node objects in grandas"""
@@ -48,12 +52,9 @@ class NodeFrame(DataFrame):
     _metadata = ["nodes"]
 
     def __init__(self, nodes: list, index=None, columns=None, dtype=None, copy=True):
-        super(NodeFrame, self).__init__(
-            data=[dict(n) for n in nodes],
-            index=index,
-            columns=columns,
-            dtype=dtype,
-            copy=copy,
+        data = [dict(n) for n in nodes]
+        super().__init__(
+            data=data, index=index, columns=columns, dtype=dtype, copy=copy
         )
 
         self.nodes = nodes
@@ -71,7 +72,7 @@ class RelationshipFrame(DataFrame):
     def __init__(
         self, relationships: list, index=None, columns=None, dtype=None, copy=True
     ):
-        super(RelationshipFrame, self).__init__(
+        super().__init__(
             data=[dict(n) for n in relationships],
             index=index,
             columns=columns,

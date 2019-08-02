@@ -5,7 +5,7 @@ import pandas as pd
 import json
 
 from grandas import graph_engine
-from grandas import GraphFrame
+from grandas import GraphFrame, NodeFrame, RelationshipFrame
 from grandas import Node, Relationship, Subgraph
 
 
@@ -17,8 +17,8 @@ def test_graph_engine_failure():
 @pytest.fixture
 def generate_nodes():
     nodes = [
-        {"label": "MAN", "name": "Adam", "id": "101"},
-        {"label": "WOMAN", "name": "Eve", "id": "102"},
+        {"label": "MAN", "name": "Adam", "ribs": 23, "id": "101"},
+        {"label": "WOMAN", "name": "Eve", "ribs": 24, "id": "102"},
     ]
     return nodes
 
@@ -40,9 +40,18 @@ def test_graph_frame(generate_nodes, generate_relationships):
 
 def test_node_creation(generate_nodes):
     nodes = [Node(**x) for x in generate_nodes]
+    assert len(nodes) == len(generate_nodes)
     assert nodes[0]["label"] == "MAN"
-    assert nodes[0].to_json() == '{"label": "MAN", "name": "Adam", "id": "101"}'
-    print(nodes[0])
+    # assert str(nodes[0].to_json()) == str(dict(generate_nodes[0]))
+    assert list(nodes[0].keys()) == list(generate_nodes[0].keys())
     node_to_series = pd.Series(data=nodes[0]._attrs)
-    print(node_to_series)
     assert node_to_series["label"] == "MAN"
+
+
+def test_nodes(generate_nodes):
+    nodes = [Node(**x) for x in generate_nodes]
+    assert len(nodes) == 2
+    for n in nodes:
+        assert len(n.keys()) == 4
+    ndf = NodeFrame(nodes=nodes)
+    assert ndf.shape == (2, 4)

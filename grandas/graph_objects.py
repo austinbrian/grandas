@@ -1,15 +1,14 @@
 import json
 
 
-class Node:
-    """
-    Nodes are created by passing in a dictionary or JSON object at initialization
-    """
+class GOBase:
+    """Base object for graph_object methods"""
 
     def __init__(self, **kwargs):
         self._attrs = dict(**kwargs)
         for key, value in kwargs.items():
             setattr(self, key, value)
+        self.id = hash(self)
 
     def __getitem__(self, item: str):
         return self._attrs[item]
@@ -18,14 +17,20 @@ class Node:
         return json.dumps(self._attrs)
 
     def __repr__(self):
-        return f"(Node: {self._attrs})"
+        return f"({self.__class__.__name__}: {self._attrs})"
 
     def __setitem__(self, item: str, val):
         self._attrs[item] = val
 
     def __eq__(self, other):
-        if isinstance(other, Node):
+        if isinstance(other, self.__class__):
             return self.id == other.id
+
+    def __str__(self):
+        return str(list(self._attrs.items()))
+
+    def __hash__(self):
+        return hash(str(self))
 
     def _keys(self):
         yield from iter(self._attrs.keys())
@@ -49,9 +54,26 @@ class Node:
         yield from iter(self._attrs.items())
 
 
-class Relationship:
+class Node(GOBase):
+    """
+    Nodes are created by passing in a dictionary or JSON object at initialization
+    """
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+
+class Relationship(GOBase):
     # NOTE: bidirectected relationships are duplicated as two relationships
-    pass
+    def __init__(self, start=None, end=None, **kwargs):
+        super().__init__(**kwargs)
+        # if either of these is none, we're going to rename the other to the same node
+        if not start:
+            start = end
+        if not end:
+            end = start
+        self._attrs["start"] = start
+        self._attrs["end"] = end
 
 
 class Subgraph:
