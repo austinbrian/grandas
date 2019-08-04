@@ -51,7 +51,7 @@ class GOBase:
         return self._attrs
 
     def __iter__(self):
-        yield from iter(self._attrs.items())
+        yield from iter(self._attrs)
 
 
 class Node(GOBase):
@@ -61,6 +61,10 @@ class Node(GOBase):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
+    def link(self, **kwargs):
+        """Create a relationship linkage between two Node objects"""
+        return Relationship(start=self, **kwargs)
 
 
 class Relationship(GOBase):
@@ -72,8 +76,18 @@ class Relationship(GOBase):
             start = end
         if not end:
             end = start
-        self._attrs["start"] = start
-        self._attrs["end"] = end
+        if not start:
+            raise TypeError("missing required argument 'start'.")
+        if not end:
+            raise TypeError("missing required argument 'end'.")
+        self.start = start
+        self.end = end
+
+    def __repr__(self):
+        start_node = self.start
+        end_node = self.end
+
+        return f"{repr(self.start)}-\n({self.__class__.__name__}: {self._attrs}->\n{repr(self.end)}"
 
 
 class Subgraph:
