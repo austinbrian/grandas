@@ -26,6 +26,10 @@ class GraphFrame:
         if "graph" in kwargs:
             self.graph = graph
 
+        node_dict = [dict(x) for x in self.nodes]
+
+        self.nodeframe = NodeFrame(nodes=node_dict)
+
     def _make_graph(self, objs):
         pass
 
@@ -35,6 +39,8 @@ class GraphFrame:
         return NodeFrame(nodes=nodes)
 
     def make_relationships(self):
+        # want to set the index here so it passes correctly
+        RelationshipFrame(relationships=rels).set_index(["start_hash", "end_hash"])
         pass
 
     def head(self, n=5, r=15):
@@ -56,21 +62,15 @@ class GraphFrame:
 class NodeFrame(DataFrame):
     """Extends a pandas DataFrame to initialize for Node objects in grandas"""
 
-    @property
-    def _constructor(self):
-        return NodeFrame
-
-    # @property
-    # def _constructor_sliced(self):
-    #     return NodeFrame
-
     _metadata = ["nodes"]
 
-    def __init__(self, nodes: list, index=None, columns=None, dtype=None, copy=True):
-        data = [dict(n) for n in nodes]
-        super().__init__(
-            data=data, index=index, columns=columns, dtype=dtype, copy=copy
-        )
+    def __init__(self, nodes: list, *args, **kwargs):
+        data = []
+        for n in nodes:
+            n_dict = dict(n)
+            n_dict["hash_val"] = hash(n)
+            data.append(n_dict)
+        super().__init__(data=data, *args, **kwargs)
 
         self.nodes = nodes
 
@@ -87,28 +87,21 @@ class NodeFrame(DataFrame):
 class RelationshipFrame(DataFrame):
     """Extends a pandas DataFrame to initialize for Relationship objects in grandas"""
 
-    @property
-    def _constructor(self):
-        return RelationshipFrame
-
-    # @property
-    # def _constructor_sliced(self):
-    #     return RelationshipFrame
-
     _metadata = ["relationships"]
 
-    def __init__(
-        self, relationships: list, index=None, columns=None, dtype=None, copy=True
-    ):
-        super().__init__(
-            data=[dict(n) for n in relationships],
-            index=index,
-            columns=columns,
-            dtype=dtype,
-            copy=copy,
-        )
+    def __init__(self, relationships: list, *args, **kwargs):
+        data = []
+        for r in relationships:
+            r_dict = dict(r)
+            r_dict["start_hash"] = hash(getattr(r, "start", 0))
+            r_dict["end_hash"] = hash(getattr(r, "end", 0))
+            data.append(r_dict)
+
+        super().__init__(data=data, *args, **kwargs)
 
         self.relationships = relationships
+        self.start_nodes = [r.start for r in relationships]
+        self.end_nodes = [r.end for r in relationships]
 
     def expand(self):
         """
@@ -116,6 +109,10 @@ class RelationshipFrame(DataFrame):
         out the properties in each of them, for a dataframe with the full set of
         all details on the entity-relationship pairs.
         """
+        start_df = NodeFrame(nodes=self.start_nodes)
+        start_df[""]
+        end_df = NodeFrame(nodes=self.end_nodes)
+
         pass
 
     def invert(self, label="label"):
