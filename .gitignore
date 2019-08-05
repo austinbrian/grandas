@@ -102,3 +102,6 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# For now, don't want to commit notebooks
+notebooks/
