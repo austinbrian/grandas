@@ -26,8 +26,12 @@ class GraphFrame:
         if "graph" in kwargs:
             self.graph = graph
 
-        self.nodeframe = NodeFrame(nodes=self.nodes)
-        self.relationshipframe = RelationshipFrame(relationships=self.rels)
+        display(
+            # self.nodes,
+            # self.rels
+            self.nodes.style.set_caption("Nodes"),
+            self.rels.style.set_caption("Relationships"),
+        )
 
     def _make_graph(self, objs):
         pass
@@ -39,12 +43,9 @@ class GraphFrame:
 
     def make_relationships(self, relationships):
         # want to set the index here so it passes correctly
-        RelationshipFrame(relationships=relationships).set_index(
-            ["start_hash", "end_hash"]
-        )
-        pass
+        return RelationshipFrame(relationships=relationships)
 
-    def head(self, n=5, r=15):
+    def head(self, n=5, r=5):
         # NOTE: Head should return the top 5 (by default) nodes, and all the
         # relationships associated with those 5 nodes (up to a limit of, say 10?)
 
@@ -52,12 +53,18 @@ class GraphFrame:
         # edited settings in jupyter notebook:
         # https://stackoverflow.com/questions/38783027/jupyter-notebook-display-two-pandas-tables-side-by-side
 
-        # seems like it can be edited to just return display(both, dataframes)
-        pass
+        nodes_to_return = self.nodes.head(n)
+        relationships_to_return = self.rels.head(r)
+
+        display(self.nodes.head(5), self.rels.head(15))
+        return self.nodes.head(5), self.rels.head(2)
 
     def resolve(self):
         # start by comparing hashes across the nodeframe
         pass
+
+    def expand(self):
+        return self.rels.expand()
 
 
 class NodeFrame(DataFrame):
