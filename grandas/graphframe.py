@@ -1,5 +1,6 @@
 """Initial graph object"""
 from pandas import DataFrame, Series
+import pandas as pd
 
 from .graph_objects import Node, Relationship
 
@@ -17,18 +18,16 @@ class GraphFrame:
     def _constructor_sliced(self):
         return GraphFrame
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, nodes, relationships, *args, **kwargs):
 
-        if "nodes" in kwargs:
-            self.nodes = self.make_nodes(nodes=kwargs["nodes"])  # Pandas DataFrame
-        self.rels = self.make_relationships()
+        self.nodes = self.make_nodes(nodes=nodes)  # Pandas DataFrame
+        self.rels = self.make_relationships(relationships=relationships)
 
         if "graph" in kwargs:
             self.graph = graph
 
-        node_dict = [dict(x) for x in self.nodes]
-
-        self.nodeframe = NodeFrame(nodes=node_dict)
+        self.nodeframe = NodeFrame(nodes=self.nodes)
+        self.relationshipframe = RelationshipFrame(relationships=self.rels)
 
     def _make_graph(self, objs):
         pass
@@ -38,9 +37,11 @@ class GraphFrame:
 
         return NodeFrame(nodes=nodes)
 
-    def make_relationships(self):
+    def make_relationships(self, relationships):
         # want to set the index here so it passes correctly
-        RelationshipFrame(relationships=rels).set_index(["start_hash", "end_hash"])
+        RelationshipFrame(relationships=relationships).set_index(
+            ["start_hash", "end_hash"]
+        )
         pass
 
     def head(self, n=5, r=15):
@@ -83,6 +84,9 @@ class NodeFrame(DataFrame):
         deduped_table = hash_df.drop_duplicates("hash")
         return deduped_table
 
+    def to_df(self):
+        return pd.DataFrame([dict(x) for x in self.nodes])
+
 
 class RelationshipFrame(DataFrame):
     """Extends a pandas DataFrame to initialize for Relationship objects in grandas"""
@@ -103,17 +107,47 @@ class RelationshipFrame(DataFrame):
         self.start_nodes = [r.start for r in relationships]
         self.end_nodes = [r.end for r in relationships]
 
+    def to_df(self):
+        return pd.DataFrame([dict(x) for x in self.relationships])
+
     def expand(self):
         """
         Method takes the nodes that are multi-indexed in Relationships and expands
         out the properties in each of them, for a dataframe with the full set of
         all details on the entity-relationship pairs.
         """
-        start_df = NodeFrame(nodes=self.start_nodes)
-        start_df[""]
-        end_df = NodeFrame(nodes=self.end_nodes)
+        sn = NodeFrame(self.start_nodes)
+        en = NodeFrame(self.end_nodes)
+        r_cols = [x for x in self.columns if x not in ["start_hash", "end_hash"]]
+        s_cols = [x for x in sn.columns if x not in ["hash_val"]]
+        e_cols = [x for x in en.columns if x not in ["hash_val"]]
+        col = r_cols + s_cols + e_cols
+        src = (
+            ["relationship"] * len(r_cols)
+            + ["start"] * len(s_cols)
+            + ["end"] * (len(e_cols))
+        )
+        exdf_col = pd.MultiIndex.from_arrays([src, col])
+        exdf = (
+            pd.merge(
+                self.set_index("start_hash"),
+                sn.set_index("hash_val"),
+                right_index=True,
+                left_index=True,
+                suffixes=("_rel", "_start"),
+            )
+            .set_index("end_hash")
+            .merge(
+                en.set_index("hash_val"),
+                right_index=True,
+                left_index=True,
+                suffixes=("_start", "_end"),
+            )
+            .reset_index(drop=True)
+        )
+        exdf.columns = exdf_col
 
-        pass
+        return exdf
 
     def invert(self, label="label"):
         """

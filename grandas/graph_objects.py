@@ -29,6 +29,9 @@ class GOBase:
     def __str__(self):
         return str(list(self._attrs.items()))
 
+    def __len__(self):
+        return len(self.keys())
+
     def __hash__(self):
         return hash(str(self))
 
