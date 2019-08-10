@@ -1,6 +1,9 @@
 """Initial graph object"""
 from pandas import DataFrame, Series
 import pandas as pd
+import warnings
+
+warnings.filterwarnings("ignore")
 
 from .graph_objects import Node, Relationship
 
@@ -20,20 +23,54 @@ class GraphFrame:
 
     def __init__(self, nodes, relationships, *args, **kwargs):
 
-        self.nodes = self.make_nodes(nodes=nodes)  # Pandas DataFrame
-        self.rels = self.make_relationships(relationships=relationships)
+        self.nodes = nodes
+        self.relationships = relationships
 
         if "graph" in kwargs:
             self.graph = graph
 
+        self.nframe = self.make_nodes(nodes=nodes)  # Pandas DataFrame
+        self.rframe = self.make_relationships(relationships=relationships)
+
+    def __repr__(self):
         display(
-            # self.nodes,
-            # self.rels
-            self.nodes.style.set_caption("Nodes"),
-            self.rels.style.set_caption("Relationships"),
+            self.nframe.style.set_caption("Nodes"),
+            self.rframe.style.set_caption("Relationships"),
+        )
+        return (
+            f"GraphFrame\nNodes: {len(self.nframe)}\nRelationships: {len(self.rframe)}"
         )
 
+    def __len__(self) -> int:
+        """Length returns the number of nodes in the GraphFrame
+
+        Returns
+        -------
+        int
+            Number of nodes
+
+        """
+        return len(self.nframe)
+
+    def info(self):
+        self.nframe.info()
+        self.rframe.info()
+
+    @property
+    def nf(self):
+        return self.make_nodes(nodes=self.nodes)
+
+    @property
+    def rf(self):
+        return self.make_relationships(relationships=self.relationships)
+
     def _make_graph(self, objs):
+        pass
+
+    def __repr_html__(self):
+        # NOTE: This should display two distinct dataframes, so should have some
+        # edited settings in jupyter notebook:
+        # https://stackoverflow.com/questions/38783027/jupyter-notebook-display-two-pandas-tables-side-by-side
         pass
 
     def make_nodes(self, nodes):
@@ -45,26 +82,22 @@ class GraphFrame:
         # want to set the index here so it passes correctly
         return RelationshipFrame(relationships=relationships)
 
-    def head(self, n=5, r=5):
+    def head(self, n=5, r=10):
         # NOTE: Head should return the top 5 (by default) nodes, and all the
         # relationships associated with those 5 nodes (up to a limit of, say 10?)
 
-        # NOTE: This should display two distinct dataframes, so should have some
-        # edited settings in jupyter notebook:
-        # https://stackoverflow.com/questions/38783027/jupyter-notebook-display-two-pandas-tables-side-by-side
+        nodes_to_return = self.nodes[:n]
+        relationships_to_return = self.relationships[:r]
 
-        nodes_to_return = self.nodes.head(n)
-        relationships_to_return = self.rels.head(r)
-
-        display(self.nodes.head(5), self.rels.head(15))
-        return self.nodes.head(5), self.rels.head(2)
+        # display(nodes_to_return, relationships_to_return)
+        return GraphFrame(nodes=nodes_to_return, relationships=relationships_to_return)
 
     def resolve(self):
         # start by comparing hashes across the nodeframe
         pass
 
     def expand(self):
-        return self.rels.expand()
+        return self.rframe.expand()
 
 
 class NodeFrame(DataFrame):
