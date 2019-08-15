@@ -15,21 +15,44 @@ def test_graph_engine_failure():
 
 
 @pytest.fixture
-def generate_nodes():
+def generate_node_dict():
     nodes = [
         {"label": "MAN", "name": "Adam", "ribs": 23, "id": "101"},
         {"label": "WOMAN", "name": "Eve", "ribs": 24, "id": "102"},
     ]
     return nodes
 
+@pytest.fixture
+def generate_nodes(generate_node_dict):
+    nodes = [Node(**x) for x in generate_node_dict]
+    return nodes
 
 @pytest.fixture
-def generate_relationships():
+def generate_nodeframe(generate_nodes):
+    return NodeFrame(nodes=generate_nodes)
+
+@pytest.fixture
+def generate_relationships_dict():
     relationships = [
         dict(zip(("start", "end", "label", "day"), ("101", "102", "gave_rib", "8")))
     ]
     return relationships
 
+@pytest.fixture
+def generate_relationships(generate_relationships_dict):
+    rels = [Relationship(**x) for x in generate_relationships_dict]
+    return rels
+
+
+def test_relationships(generate_relationships):
+    rels = generate_relationships
+    r, *others = rels
+    assert r.start=='101'
+    assert r.end=='102'
+
+@pytest.fixture
+def generate_relationshipframe(generate_relationships):
+    return RelationshipFrame(nodes=generate_nodes)
 
 @pytest.mark.skip
 def test_graph_frame(generate_nodes, generate_relationships):
@@ -50,8 +73,8 @@ def test_node_creation(generate_nodes):
     assert node_to_series["label"] == "MAN"
 
 
-def test_nodes(generate_nodes):
-    nodes = [Node(**x) for x in generate_nodes]
+def test_nodes(generate_node_dict):
+    nodes = [Node(**x) for x in generate_node_dict]
     assert len(nodes) == 2
     for n in nodes:
         assert len(n.keys()) == 4
@@ -60,7 +83,3 @@ def test_nodes(generate_nodes):
     assert ndf.shape == (2, 5)
 
 
-def test_relationships(generate_relationships):
-    rels = generate_relationships
-    relationship_objects = [Relationship(**r) for r in rels]
-    pass
