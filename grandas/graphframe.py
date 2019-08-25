@@ -41,6 +41,20 @@ class GraphFrame:
             f"GraphFrame\nNodes: {len(self.nframe)}\nRelationships: {len(self.rframe)}"
         )
 
+    def __getitem__(self, item):
+        df = self.rframe.expand()
+        # first try just applying them in order
+        try:
+            return df[item]
+
+        # else try to build up the multiindex
+        except KeyError:
+            mindex = []
+            for x in df.columns:
+                if item in x:
+                    mindex.append(x)
+            return df[mindex]
+
     def __len__(self) -> int:
         """Length returns the number of nodes in the GraphFrame
 
