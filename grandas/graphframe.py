@@ -41,6 +41,20 @@ class GraphFrame:
             f"GraphFrame\nNodes: {len(self.nframe)}\nRelationships: {len(self.rframe)}"
         )
 
+    def __getitem__(self, item):
+        df = self.rframe.expand()
+        # first try just applying them in order
+        try:
+            return df[item]
+
+        # else try to build up the multiindex
+        except KeyError:
+            mindex = []
+            for x in df.columns:
+                if item in x:
+                    mindex.append(x)
+            return df[mindex]
+
     def __len__(self) -> int:
         """Length returns the number of nodes in the GraphFrame
 
@@ -116,13 +130,7 @@ class NodeFrame(DataFrame):
         self.nodes = nodes
 
     def resolve(self):
-        # Broken by
-        # TypeError: 'BlockManager' object is not iterable
-        df_copy = self.copy()
-        hash_df = pd.DataFrame(df_copy.nodes(), columns=["nodes"])
-        hash_df["hash"] = hash_df.nodes.apply(hash)
-        deduped_table = hash_df.drop_duplicates("hash")
-        return deduped_table
+        return NodeFrame(list(set(self.nodes)))
 
     def to_df(self):
         return pd.DataFrame([dict(x) for x in self.nodes])
