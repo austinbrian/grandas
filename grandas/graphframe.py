@@ -130,13 +130,7 @@ class NodeFrame(DataFrame):
         self.nodes = nodes
 
     def resolve(self):
-        # Broken by
-        # TypeError: 'BlockManager' object is not iterable
-        df_copy = self.copy()
-        hash_df = pd.DataFrame(df_copy.nodes(), columns=["nodes"])
-        hash_df["hash"] = hash_df.nodes.apply(hash)
-        deduped_table = hash_df.drop_duplicates("hash")
-        return deduped_table
+        return NodeFrame(list(set(self.nodes)))
 
     def to_df(self):
         return pd.DataFrame([dict(x) for x in self.nodes])
