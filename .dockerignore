@@ -1,0 +1,11 @@
+.git
+.gitignore
+*/.ipynb_checkpoints/
+.travis.yml
+Dockerfile
+.DS_Store
+dist/
+*.egg-info/
+tests/
+.pytest_cache
+.coverage
