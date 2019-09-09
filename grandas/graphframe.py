@@ -12,18 +12,23 @@ def from_df(df, nodes=None, relationships=None, *args, **kwargs):
     # Allows for either a list or None
     if type(nodes) is not dict:
         if type(nodes) is str:
-            nodes = [nodes]
-        node_df = df[nodes]
+            node_columns = [nodes]
+        elif type(nodes) == type(None): # None is a singleton
+            node_columns=df.columns
+        else:
+            node_columns=list(nodes)
+
+        node_df = df[node_columns]
         node_dict_list = node_df.to_dict(orient='record')
         node_list = [Node(**x) for x in node_dict_list]
 
-    if nodes:
+    elif nodes:
         # Expect nodes to be a dict, where each key is the node label used
         node_list = []
         for label in nodes:
             ndf = pd.DataFrame()
-            ndf[label]=label
             ndf[nodes[label]] = df[nodes[label]]
+            ndf['label']=label
             node_dict_list = ndf.to_dict(orient='record')
             converted_node_list = [Node(**x) for x in node_dict_list]
             node_list.extend(converted_node_list)
