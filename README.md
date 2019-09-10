@@ -43,11 +43,8 @@ rels = [
 ]
 gf = GraphFrame(nodes=nodes, relationships=rels)
 
-node_frame = gf.nodes
-relationship_frame =  gf.rels
+node_frame = gf.nframe
+relationship_frame =  gf.rframe
 ```
 
-
----
-## Contributing
-Contributions are more than welcome! Please just submit a pull request to the `develop` branch.
+If you are already starting with a pandas DataFrame, you can use the `grandas.from_df` method to transform your DataFrame into a GraphFrame object that has its own NodeFrame and RelationshipFrame, using arguments in the function's signature to identify the way Nodes and Relationships are stored in the data.
