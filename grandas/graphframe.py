@@ -33,7 +33,20 @@ def from_df(df, nodes=None, relationships=None, *args, **kwargs):
             converted_node_list = [Node(**x) for x in node_dict_list]
             node_list.extend(converted_node_list)
     if relationships:
-        relationships_list = relationships
+        # start with a basic case where rels is all you need
+        if isinstance(relationships,dict):
+            assert 'start' in relationships
+            start_cols = relationships['start']
+            start_nodes = [Node(**x) for x in df[start_cols].to_dict(orient='record')]
+            assert 'end' in relationships
+            end_cols = relationships['end']
+            try:
+                end_nodes = [Node(**x) for x in df[end_cols].to_dict(orient='record')]
+            except:
+                # Need to change if there is only one column here, since to_dict does not have orient method
+                end_node_dict_list = [{end_cols:v} for v in df[end_cols].to_dict().values()]
+                end_nodes = [Node(**x) for x in end_node_dict_list]
+            relationships_list = [Relationship(start=x[0], end=x[1]) for x in zip(start_nodes, end_nodes)]
 
 
         return GraphFrame(nodes=node_list, relationships=relationships_list, *args, **kwargs)
