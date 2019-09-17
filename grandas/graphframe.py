@@ -36,15 +36,15 @@ def from_df(df, nodes=None, relationships=None, *args, **kwargs):
         # start with a basic case where rels is all you need
         if isinstance(relationships,dict):
             assert 'start' in relationships
-            start_cols = relationships['start']
+            start_cols = relationships.pop('start')
             start_data = pd.DataFrame(df[start_cols])
             start_nodes = [Node(**x) for x in start_data.to_dict(orient='record')]
             assert 'end' in relationships
-            end_cols = relationships['end']
+            end_cols = relationships.pop('end')
             end_data = pd.DataFrame(df[end_cols])
             end_nodes = [Node(**x) for x in end_data.to_dict(orient='record')]
 
-            relationships_list = [Relationship(start=x[0], end=x[1]) for x in zip(start_nodes, end_nodes)]
+            relationships_list = [Relationship(start=x[0], end=x[1], **relationships) for x in zip(start_nodes, end_nodes)]
 
 
         return GraphFrame(nodes=node_list, relationships=relationships_list, *args, **kwargs)
@@ -57,7 +57,10 @@ class GraphFrame:
 
     @property
     def _constructor(self):
-        return GraphFrame
+        if self.relationships is not None:
+            return GraphFrame
+        else:
+            return NodeFrame
 
     @property
     def _constructor_sliced(self):
@@ -72,7 +75,10 @@ class GraphFrame:
             self.graph = graph
 
         self.nframe = self.make_nodes(nodes=nodes)  # Pandas DataFrame
-        self.rframe = self.make_relationships(relationships=relationships)
+        if self.relationships is not None:
+            self.rframe = self.make_relationships(relationships=relationships)
+        else:
+            self.rframe=RelationshipFrame(relationships=[])
 
     def __repr__(self):
         display(
