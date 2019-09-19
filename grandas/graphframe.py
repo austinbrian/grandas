@@ -7,19 +7,20 @@ warnings.filterwarnings("ignore")
 
 from .graph_objects import Node, Relationship
 
+
 def from_df(df, nodes=None, relationships=None, *args, **kwargs):
 
     # Allows for either a list or None
     if type(nodes) is not dict:
         if type(nodes) is str:
             node_columns = [nodes]
-        elif type(nodes) == type(None): # None is a singleton
-            node_columns=df.columns
+        elif type(nodes) == type(None):  # None is a singleton
+            node_columns = df.columns
         else:
-            node_columns=list(nodes)
+            node_columns = list(nodes)
 
         node_df = df[node_columns]
-        node_dict_list = node_df.to_dict(orient='record')
+        node_dict_list = node_df.to_dict(orient="record")
         node_list = [Node(**x) for x in node_dict_list]
 
     elif nodes:
@@ -28,26 +29,35 @@ def from_df(df, nodes=None, relationships=None, *args, **kwargs):
         for label in nodes:
             ndf = pd.DataFrame()
             ndf[nodes[label]] = df[nodes[label]]
-            ndf['label']=label
-            node_dict_list = ndf.to_dict(orient='record')
+            ndf["label"] = label
+            node_dict_list = ndf.to_dict(orient="record")
             converted_node_list = [Node(**x) for x in node_dict_list]
             node_list.extend(converted_node_list)
     if relationships:
         # start with a basic case where rels is all you need
-        if isinstance(relationships,dict):
-            assert 'start' in relationships
-            start_cols = relationships.pop('start')
-            start_data = pd.DataFrame(df[start_cols])
-            start_nodes = [Node(**x) for x in start_data.to_dict(orient='record')]
-            assert 'end' in relationships
-            end_cols = relationships.pop('end')
-            end_data = pd.DataFrame(df[end_cols])
-            end_nodes = [Node(**x) for x in end_data.to_dict(orient='record')]
+        if isinstance(relationships, dict):
 
-            relationships_list = [Relationship(start=x[0], end=x[1], **relationships) for x in zip(start_nodes, end_nodes)]
+            def rel_dict_to_rel_list(relationships, df):
+                assert "start" in relationships
+                start_cols = relationships.pop("start")
+                start_data = pd.DataFrame(df[start_cols])
+                start_nodes = [Node(**x) for x in start_data.to_dict(orient="record")]
+                assert "end" in relationships
+                end_cols = relationships.pop("end")
+                end_data = pd.DataFrame(df[end_cols])
+                end_nodes = [Node(**x) for x in end_data.to_dict(orient="record")]
 
+                relationships_list = [
+                    Relationship(start=x[0], end=x[1], **relationships)
+                    for x in zip(start_nodes, end_nodes)
+                ]
 
-        return GraphFrame(nodes=node_list, relationships=relationships_list, *args, **kwargs)
+            return relationships_list
+            relationships_list = rel_dict_to_rel_list(relationships, df)
+
+        return GraphFrame(
+            nodes=node_list, relationships=relationships_list, *args, **kwargs
+        )
     if not relationships:
         return NodeFrame(node_list, *args, **kwargs)
 
@@ -78,7 +88,7 @@ class GraphFrame:
         if self.relationships is not None:
             self.rframe = self.make_relationships(relationships=relationships)
         else:
-            self.rframe=RelationshipFrame(relationships=[])
+            self.rframe = RelationshipFrame(relationships=[])
 
     def __repr__(self):
         display(
