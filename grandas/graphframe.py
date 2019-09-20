@@ -8,6 +8,24 @@ warnings.filterwarnings("ignore")
 from .graph_objects import Node, Relationship
 
 
+def rel_dict_to_rel_list(relationships, df):
+    assert "start" in relationships
+    start_cols = relationships.pop("start")
+    start_data = pd.DataFrame(df[start_cols])
+    start_nodes = [Node(**x) for x in start_data.to_dict(orient="record")]
+    assert "end" in relationships
+    end_cols = relationships.pop("end")
+    end_data = pd.DataFrame(df[end_cols])
+    end_nodes = [Node(**x) for x in end_data.to_dict(orient="record")]
+
+    relationships_list = [
+        Relationship(start=x[0], end=x[1], **relationships)
+        for x in zip(start_nodes, end_nodes)
+    ]
+
+    return relationships_list
+
+
 def from_df(df, nodes=None, relationships=None, *args, **kwargs):
 
     # Allows for either a list or None
@@ -34,26 +52,45 @@ def from_df(df, nodes=None, relationships=None, *args, **kwargs):
             converted_node_list = [Node(**x) for x in node_dict_list]
             node_list.extend(converted_node_list)
     if relationships:
+
         # start with a basic case where rels is all you need
         if isinstance(relationships, dict):
-
-            def rel_dict_to_rel_list(relationships, df):
-                assert "start" in relationships
-                start_cols = relationships.pop("start")
-                start_data = pd.DataFrame(df[start_cols])
-                start_nodes = [Node(**x) for x in start_data.to_dict(orient="record")]
-                assert "end" in relationships
-                end_cols = relationships.pop("end")
-                end_data = pd.DataFrame(df[end_cols])
-                end_nodes = [Node(**x) for x in end_data.to_dict(orient="record")]
-
-                relationships_list = [
-                    Relationship(start=x[0], end=x[1], **relationships)
-                    for x in zip(start_nodes, end_nodes)
-                ]
-
-            return relationships_list
             relationships_list = rel_dict_to_rel_list(relationships, df)
+
+        # if it's a tuple, two options
+        # 1. user selects the labels from nodes that are desired
+        # 2. user selects exactly the cols wanted for the start/end/rel properties
+        elif isinstance(relationships, tuple):
+            # 1. --> assign the node df based on the label defined above
+            if nodes is not None:
+                start_, end_, *others_ = relationships
+                # Nodes is a dict with the label as the key
+                if start_ and end_ in nodes:
+                    start_df = pd.DataFrame(df[nodes[start_]])
+                    end_df = pd.DataFrame(df[nodes[end_]])
+                    rel_dict = {
+                        "start": start_df.columns,
+                        "end": end_df.columns,
+                        **{str(o): o for o in others_},
+                    }
+                else:
+                    start_, end_, *others_ = relationships
+                    rel_dict = {
+                        "start": start_,
+                        "end": end_,
+                        **{str(o): o for o in others_},
+                    }
+                    # TODO: refactor DRY
+                relationships_list = rel_dict_to_rel_list(rel_dict, df)
+            # 2. --> really just a re-implementation of the relationships dict
+            else:
+                start_, end_, *others_ = relationships
+                rel_dict = {
+                    "start": start_,
+                    "end": end_,
+                    **{str(o): o for o in others_},
+                }
+                relationships_list = rel_dict_to_rel_list(rel_dict, df)
 
         return GraphFrame(
             nodes=node_list, relationships=relationships_list, *args, **kwargs
@@ -147,12 +184,16 @@ class GraphFrame:
 
     def make_nodes(self, nodes):
         # Make this from the Nodes class below
-
-        return NodeFrame(nodes=nodes)
+        if isinstance(nodes, NodeFrame):
+            return nodes
+        else:
+            return NodeFrame(nodes=nodes)
 
     def make_relationships(self, relationships):
-        # want to set the index here so it passes correctly
-        return RelationshipFrame(relationships=relationships)
+        if isinstance(relationships, RelationshipFrame):
+            return relationships
+        else:
+            return RelationshipFrame(relationships=relationships)
 
     def head(self, n=5, r=10):
         # NOTE: Head should return the top 5 (by default) nodes, and all the
